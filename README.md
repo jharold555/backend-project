@@ -1,3 +1,7 @@
 # Northcoders News API
 
-For instructions, please head over to [L2C NC News](https://l2c.northcoders.com/courses/be/nc-news).
+To use this repo, create two files in the main directory called .env.test and .env.development. The .test file should contain:
+PGDATABASE=nc_news_test
+
+And the .development file should contain:
+PGDATABASE=nc_news
