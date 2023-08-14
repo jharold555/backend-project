@@ -4,6 +4,7 @@ const seed = require("../db/seeds/seed.js");
 const testData = require("../db/data/test-data/index.js");
 const db = require("../db/connection.js");
 
+
 beforeEach(() => {
   return seed(testData);
 });
@@ -37,3 +38,19 @@ describe("GET /api/topics", () => {
       });
   });
 });
+describe('GET apis', () => {
+    test('returns 200 status code', () => {
+        return request(app).get("/api").expect(200)
+    })
+    test('returns an object containing api info', () => {
+    return request(app)
+    .get('/api')
+    .expect(200)
+    .then(response => {
+        const data = response.body
+        expect(data.apis).toHaveProperty('GET /api/topics')
+        expect(data.apis).toHaveProperty('GET /api')
+        expect(data.apis).toHaveProperty('GET /api/articles')
+    })
+    })
+})
