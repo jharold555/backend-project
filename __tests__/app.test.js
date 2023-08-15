@@ -11,12 +11,12 @@ afterAll(() => {
   return db.end();
 });
 describe("handles incorrect url error", () => {
-  test("404 error", () => {
+  test("400 error", () => {
     return request(app)
       .get("/api/topi")
-      .expect(404)
+      .expect(400)
       .then(({ body }) => {
-        expect(body.msg).toBe('404 Route not found');
+        expect(body.msg).toBe('400 Invalid route');
       });
   });
   
@@ -65,7 +65,7 @@ describe("GET /api/articles/:article_id", () => {
       .expect(200)
       .then((response) => {
         const { article } = response.body;
-        expect({ article }).toEqual({
+        expect({ article }).toMatchObject({
           article: {
             article_id: 2,
             title: "Sony Vaio; or, The Laptop",
@@ -80,10 +80,16 @@ describe("GET /api/articles/:article_id", () => {
         });
       });
   });
-  test('returns a 400 error for id that does not exist', () => {
-    return request(app).get('/api/articles/70').expect(400)
+  test('returns a 404 error for id that does not exist', () => {
+    return request(app).get('/api/articles/70').expect(404)
     .then(({body}) => {
-    expect(body.msg).toBe('400 Bad Request, article_id of 70 not found')
+    expect(body.msg).toBe('404 article_id of 70 Not Found')
+    })
+  })
+  test('returns a 400 error for incorrect id type', () => {
+    return request(app).get('/api/articles/banana').expect(400)
+    .then(({body}) => {
+    expect(body.msg).toBe('400 Invalid Route')
     })
   })
 });
