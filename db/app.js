@@ -1,11 +1,12 @@
 const express = require('express')
 const app = express();
-const {getTopics, getApis, getArticle} = require('./controllers.js')
+const {getTopics, getApis, getArticle, getArticles} = require('./controllers.js')
 
 
 app.get('/api', getApis)
 app.get('/api/topics', getTopics)
 app.get('/api/articles/:article_id', getArticle)
+app.get("/api/articles", getArticles);
 
 app.use((err, req, res, next) => {
     if (err.status) {
@@ -15,7 +16,7 @@ app.use((err, req, res, next) => {
 })
 app.use((req, res, next) => {
     
-    res.status(400).send({msg: '400 Invalid route'})
+    res.status(400).send({msg: '400 Bad Request'})
     
 })
 

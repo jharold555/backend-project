@@ -16,7 +16,7 @@ describe("handles incorrect url error", () => {
       .get("/api/topi")
       .expect(400)
       .then(({ body }) => {
-        expect(body.msg).toBe('400 Invalid route');
+        expect(body.msg).toBe('400 Bad Request');
       });
   });
   
@@ -65,8 +65,8 @@ describe("GET /api/articles/:article_id", () => {
       .expect(200)
       .then((response) => {
         const { article } = response.body;
-        expect({ article }).toMatchObject({
-          article: {
+        expect(article).toMatchObject(
+          {
             article_id: 2,
             title: "Sony Vaio; or, The Laptop",
             topic: "mitch",
@@ -77,7 +77,7 @@ describe("GET /api/articles/:article_id", () => {
             article_img_url:
               "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
           },
-        });
+        );
       });
   });
   test('returns a 404 error for id that does not exist', () => {
@@ -89,7 +89,49 @@ describe("GET /api/articles/:article_id", () => {
   test('returns a 400 error for incorrect id type', () => {
     return request(app).get('/api/articles/banana').expect(400)
     .then(({body}) => {
-    expect(body.msg).toBe('400 Invalid Route')
+    expect(body.msg).toBe('400 Bad Request')
     })
   })
+});
+describe("GET /api/articles", () => {
+  test("returns 200 status code", () => {
+    return request(app).get("/api/articles").expect(200);
+  });
+  test("responds with array of article objects", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then((response) => {
+        const { articles } = response.body;
+        expect(articles).toHaveLength(13);
+        articles.forEach((article) => {
+          expect(article).toHaveProperty("author");
+          expect(article).toHaveProperty("title");
+          expect(article).toHaveProperty("article_id");
+          expect(article).toHaveProperty("comment_count");
+          expect(article).not.toHaveProperty("body");
+        });
+      });
+  });
+  test("returns correct comment count", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then((response) => {
+        const { articles } = response.body;
+        expect(articles[4].comment_count).toBe(0);
+        expect(articles[7].comment_count).toBe(2);
+      });
+  });
+  test("returns articles in descending order by date", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then((response) => {
+        const { articles } = response.body;
+        expect(articles).toBeSortedBy("created_at", {
+          descending: true,
+        });
+      });
+  });
 });

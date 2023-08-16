@@ -1,7 +1,8 @@
 const {
     getTopicsData,
     getApiData,
-    getArticleData
+    getArticleData,
+    getArticlesData
 }                    = require('./models')
 
 const getApis = (req, res, next) => {
@@ -22,4 +23,9 @@ const getArticle = (req, res, next) => {
     
 }
 
-module.exports = {getTopics, getApis, getArticle}
+const getArticles = (req, res, next) => {
+    getArticlesData().then(articles => {
+        res.status(200).send({articles})
+    }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles}
