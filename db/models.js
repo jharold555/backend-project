@@ -1,6 +1,7 @@
 const db = require("./connection.js");
 const {checkExists, patchVotes, deleteItem}= require("./utils.js");
 const fsPromises = require("fs").promises;
+const format = require('pg-format')
 
 const getApiData = async () => {
   const data = await fsPromises.readFile(
@@ -20,18 +21,36 @@ const getArticleData = async (id) => {
   const article = await checkExists("articles", "article_id", id);
   return article.rows[0];
 };
-const getArticlesData = async () => {
+const getArticlesData = async (
+  sort_by = "created_at",
+  order = "desc",
+  topic
+) => {
+  const validOrder = ["asc", "desc"];
+  
+  if (!validOrder.includes(order)) {
+    return Promise.reject({ status: 400, msg: "400 Bad Request" });
+  }
   try {
-    const articlesComments = await db.query(`SELECT articles.*, 
-  COUNT(comment_id) 
-  AS comment_count FROM articles 
-  LEFT JOIN comments ON comments.article_id = articles.article_id 
-  GROUP BY articles.article_id
-  ORDER BY created_at DESC`);
+    let column = sort_by;
+    let queryStr = format(
+      `SELECT articles.*, 
+    COUNT(comment_id) 
+    AS comment_count FROM articles 
+    LEFT JOIN comments ON comments.article_id = articles.article_id 
+    GROUP BY articles.article_id
+    ORDER BY %I`,
+      column
+    );
+    order === "asc" ? (queryStr += ` ASC`) : (queryStr += ` DESC`);
 
-    const articlesArray = articlesComments.rows
+    const articlesComments = await db.query(queryStr);
+    const articlesArray = articlesComments.rows;
     articlesArray.forEach((article) => delete article.body);
-    return articlesArray;
+    if (topic) {
+      await checkExists("articles", "topic", topic);
+      return articlesArray.filter((article) => article.topic === topic);
+    } else return articlesArray;
   } catch (error) {
     throw error;
   }

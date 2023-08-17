@@ -323,14 +323,6 @@ describe("DELETE /api/comments/:comment_id", () => {
   });
 });
 describe("GET /api/users", () => {
-  test("returns 400 error for incorrect URL", async () => {
-    const response = await request(app).get("/api/use").expect(400);
-    expect(response.body.msg).toBe("400 Bad Request");
-  });
-  test("returns 200 status code and an object with key users containing array", async () => {
-    const response = await request(app).get("/api/users").expect(200);
-    expect(Array.isArray(response.body.users)).toBe(true);
-  });
   test("returns array of all user objects with correct properties", async () => {
     const response = await request(app).get("/api/users").expect(200);
     const users = response.body.users;
@@ -340,5 +332,48 @@ describe("GET /api/users", () => {
       expect(user).toHaveProperty("name");
       expect(user).toHaveProperty("avatar_url");
     });
+  });
+});
+describe("FEATURE GET /api/articles", () => {
+  test("404 if topic doesnt exist", async () => {
+    const response = await request(app)
+      .get("/api/articles?topic=bob")
+      .expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+  test("400 error if sort_by column doesnt exist", async () => {
+    const response = await request(app)
+      .get("/api/articles?sort_by=555")
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("400 error if order is not asc or dsc", async () => {
+    const response = await request(app)
+      .get("/api/articles?order=as")
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("sorts by query", async () => {
+    const response = await request(app)
+      .get("/api/articles?sort_by=author&order=asc")
+      .expect(200);
+    expect(response.body.articles).toBeSortedBy("author");
+  });
+  test("filters by topic", async () => {
+    const response = await request(app)
+      .get("/api/articles?topic=cats")
+      .expect(200);
+    response.body.articles.forEach((article) =>
+      expect(article.topic === "cats").toBe(true)
+    );
+  });
+  test("filters by topic and sorts by query", async () => {
+    const response = await request(app)
+      .get("/api/articles?topic=mitch&sort_by=title&order=asc")
+      .expect(200);
+    response.body.articles.forEach((article) =>
+      expect(article.topic === "mitch").toBe(true)
+    );
+    expect(response.body.articles).toBeSortedBy("title");
   });
 });

@@ -28,7 +28,10 @@ const getArticle = (req, res, next) => {
     
 }
 const getArticles = (req, res, next) => {
-    getArticlesData().then(articles => {
+    const topic = req.query.topic
+    const sort_by = req.query.sort_by
+    const order = req.query.order
+    getArticlesData(sort_by, order, topic).then(articles => {
         res.status(200).send({articles})
     }).catch(next)
 }
