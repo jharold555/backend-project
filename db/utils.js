@@ -9,7 +9,7 @@ const checkExists = async (table, column, value) => {
     if (dbOutput.rows.length === 0) {
       return Promise.reject({
         status: 404,
-        msg: `404 ${column} of ${value} Not Found`,
+        msg: `404 Not Found`,
       });
     }
 
@@ -41,4 +41,9 @@ const patchVotes = async (table, column, obj, id) => {
     throw error
   }
 };
-module.exports = {checkExists, patchVotes};
+const deleteItem = async (table, column, id) => {
+  const value = [id]
+  const queryStr = format("DELETE FROM %I WHERE %I = $1;", table, column)
+  await db.query(queryStr, value)
+}
+module.exports = {checkExists, patchVotes, deleteItem};

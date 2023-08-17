@@ -1,5 +1,5 @@
 const db = require("./connection.js");
-const {checkExists, patchVotes}= require("./utils.js");
+const {checkExists, patchVotes, deleteItem}= require("./utils.js");
 const fsPromises = require("fs").promises;
 
 const getApiData = async () => {
@@ -27,9 +27,9 @@ const getArticlesData = async () => {
   AS comment_count FROM articles 
   LEFT JOIN comments ON comments.article_id = articles.article_id 
   GROUP BY articles.article_id
-  ORDER BY created_at`);
+  ORDER BY created_at DESC`);
 
-    const articlesArray = articlesComments.rows.reverse();
+    const articlesArray = articlesComments.rows
     articlesArray.forEach((article) => delete article.body);
     return articlesArray;
   } catch (error) {
@@ -46,7 +46,7 @@ getCommentsData = async (id) => {
   if (commentsArray.length === 0) {
     return Promise.reject({
       status: 404,
-      msg: `404 comments for article_id of ${id} Not Found`,
+      msg: `404 comments Not Found`,
     });
   }
   return commentsArray
@@ -73,7 +73,7 @@ const insertComment = async (body, id) => {
   return commentQ.rows
 }
 catch(error){
-  if(error.msg.includes('username of')){
+  if(error.msg.includes('Not Found')){
     return Promise.reject({status: 400, msg: '400 Bad Request'})
   }
   throw error
@@ -85,5 +85,9 @@ const changeArticleVotes = async (obj, id) => {
   const article = await checkExists("articles", "article_id", id);
   return article.rows[0];
 };
+const commentDelete = async (id) => {
+  await checkExists("comments", "comment_id", id);
+  await deleteItem("comments", "comment_id", id);
+};
 
-module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes };
+module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes, commentDelete };

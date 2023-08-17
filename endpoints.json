@@ -94,6 +94,9 @@
         }
       
     }
+  },
+  "DELETE /api/comments/:comment_id": {
+    "description": "deletes comment with specified id request parameter from database, returns nothing"
   }
   }
 
