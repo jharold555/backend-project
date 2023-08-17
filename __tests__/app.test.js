@@ -3,6 +3,7 @@ const app = require("../db/app.js");
 const seed = require("../db/seeds/seed.js");
 const testData = require("../db/data/test-data/index.js");
 const db = require("../db/connection.js");
+const checkExists = require('../db/utils.js')
 
 beforeEach(() => {
   return seed(testData);
@@ -95,6 +96,10 @@ describe("GET /api/articles", () => {
       expect(article).toHaveProperty("article_id");
       expect(article).toHaveProperty("comment_count");
       expect(article).not.toHaveProperty("body");
+      expect(article).toHaveProperty("votes");
+      expect(article).toHaveProperty("created_at");
+      expect(article).toHaveProperty("topic");
+      expect(article).toHaveProperty("article_img_url");
     });
   });
 
@@ -111,5 +116,127 @@ describe("GET /api/articles", () => {
     expect(articles).toBeSortedBy("created_at", {
       descending: true,
     });
+  });
+});
+
+describe("GET /api/:article_id/comments", () => {
+
+  test("returns a 400 error for incorrect id data type", async () => {
+    const response = await request(app).get("/api/ba/comments").expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+
+  test("returns 404 error for article id that does not exist", async () => {
+    const response = await request(app).get("/api/65/comments").expect(404);
+    expect(response.body.msg).toBe("404 article_id of 65 Not Found");
+  });
+
+  test("returns 404 error if no comments for article", async () => {
+    const response = await request(app).get("/api/4/comments").expect(404);
+    expect(response.body.msg).toBe(
+      "404 comments for article_id of 4 Not Found"
+    );
+  });
+
+  test("returns 200 status code", async () => {
+    await request(app).get("/api/3/comments").expect(200);
+  });
+
+  test("comments sorted by most recent first", async () => {
+    const response = await request(app).get("/api/3/comments").expect(200);
+    const { comments } = response.body;
+    expect(comments).toBeSortedBy("created_at", {
+      descending: true,
+    });
+  });
+
+  test("returns array of comment objects for article id", async () => {
+    const response = await request(app).get("/api/3/comments").expect(200);
+    const { comments } = response.body;
+    expect(comments.length).toBe(2);
+    expect(comments).toMatchObject([
+      {
+        body: "Ambidextrous marsupial",
+        votes: 0,
+        author: "icellusedkars",
+        article_id: 3,
+        created_at: "2020-09-19T23:10:00.000Z",
+      },
+      {
+        body: "git push origin master",
+        votes: 0,
+        author: "icellusedkars",
+        article_id: 3,
+        created_at: "2020-06-20T07:24:00.000Z",
+      },
+    ]);
+  });
+});
+describe("POST /api/articles/:article_id/comments", () => {
+  test("returns 400 error message for invalid article id data type", async () => {
+    const postData = {
+      username: "butter_bridge",
+      body: "hello",
+    };
+   const response = await request(app)
+      .post("/api/articles/nn/comments")
+      .send(postData)
+      .expect(400);
+  expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 404 error message for non-existent article id", async () => {
+    const postData = {
+      username: "butter_bridge",
+      body: "hello",
+    };
+   const response = await request(app)
+      .post("/api/articles/18/comments")
+      .send(postData)
+      .expect(404);
+  expect(response.body.msg).toBe("404 article_id of 18 Not Found");
+  });
+  test("returns 404 error for non-existent user", async () => {
+    const postData = {
+      username: "bob",
+      body: "hello",
+    };
+    const response = await request(app)
+      .post("/api/articles/6/comments")
+      .send(postData)
+      .expect(404);
+    expect(response.body.msg).toBe("404 username of bob Not Found");
+  });
+  test("returns 400 error for invalid request body", async () => {
+    const postData = {};
+    const response = await request(app)
+      .post("/api/articles/6/comments")
+      .send(postData)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns comment object", async () => {
+    const postData = {
+      username: "butter_bridge",
+      body: "hello",
+    };
+    const response = await request(app)
+      .post("/api/articles/6/comments")
+      .send(postData)
+      .expect(201);
+    expect(response.body.comment).toBe("hello");
+  });
+  test("updates database", async () => {
+    const original = await checkExists("comments", "article_id", 6);
+    const postData = {
+      username: "butter_bridge",
+      body: "hello5",
+    };
+    await request(app)
+      .post("/api/articles/6/comments")
+      .send(postData)
+      .expect(201);
+    const updated = await checkExists("comments", "article_id", 6);
+    expect(updated.rows.length).toBe(original.rows.length + 1);
+    expect(updated.rows.some((obj) => obj.body === "hello5")).toBe(true);
   });
 });

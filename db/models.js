@@ -36,4 +36,50 @@ const getArticlesData = async () => {
     throw error;
   }
 };
-module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData };
+getCommentsData = async (id) => {
+  await checkExists("articles", "article_id", id);
+  const comments = await db.query(
+    "SELECT * FROM comments WHERE article_id = $1 ORDER BY created_at DESC;",
+    [id]
+  );
+  const commentsArray = comments.rows;
+  if (commentsArray.length === 0) {
+    return Promise.reject({
+      status: 404,
+      msg: `404 comments for article_id of ${id} Not Found`,
+    });
+  }
+  return commentsArray
+};
+const insertComment = async (body, id) => {
+  const keys = Object.keys(body);
+  if (
+    keys.length !== 2 ||
+    !keys.includes("body") ||
+    !keys.includes("username")
+  ) {
+    return Promise.reject({
+      status: 400,
+      msg: "400 Bad Request",
+    });
+  }
+  const user = body.username;
+  await checkExists("articles", "article_id", id);
+
+  await checkExists("users", "username", user);
+  const comment = {
+    article_id: id,
+    author: user,
+    votes: 0,
+    body: body.body,
+    created_at: new Date(),
+  };
+  const vals = Object.values(comment);
+  await db.query(
+    `INSERT INTO comments (article_id, author, votes, body, created_at) 
+  VALUES ($1, $2, $3, $4, $5)
+  RETURNING *;`,
+    vals
+  );
+};
+module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment };
