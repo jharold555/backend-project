@@ -301,3 +301,30 @@ describe("PATCH /api/articles/:article_id", () => {
     });
   });
 });
+describe("DELETE /api/comments/:comment_id", () => {
+  test("returns a 400 error for incorrect id type", async () => {
+    const response = await request(app)
+      .delete("/api/comments/banann")
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns a 404 error for non-existent id", async () => {
+    const response = await request(app).delete("/api/comments/678").expect(404);
+    expect(response.body.msg).toBe("404 comment_id of 678 Not Found");
+  });
+  test("returns 204 status with no content", async () => {
+    const response = await request(app).delete("/api/comments/8").expect(204);
+    expect(response.body).toEqual({});
+  });
+  test("deletes comment from database", async () => {
+    const original = await db.query(
+      "SELECT * FROM comments WHERE comment_id = 8"
+    );
+    expect(original.rows.length).toBe(1)
+    await request(app).delete("/api/comments/8").expect(204);
+    const deleted = await db.query(
+      "SELECT * FROM comments WHERE comment_id = 8"
+    );
+    expect(deleted.rows.length).toBe(0);
+  });
+});

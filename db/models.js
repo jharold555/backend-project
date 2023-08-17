@@ -1,5 +1,5 @@
 const db = require("./connection.js");
-const {checkExists, patchVotes}= require("./utils.js");
+const {checkExists, patchVotes, deleteItem}= require("./utils.js");
 const fsPromises = require("fs").promises;
 
 const getApiData = async () => {
@@ -27,9 +27,9 @@ const getArticlesData = async () => {
   AS comment_count FROM articles 
   LEFT JOIN comments ON comments.article_id = articles.article_id 
   GROUP BY articles.article_id
-  ORDER BY created_at`);
+  ORDER BY created_at DESC`);
 
-    const articlesArray = articlesComments.rows.reverse();
+    const articlesArray = articlesComments.rows
     articlesArray.forEach((article) => delete article.body);
     return articlesArray;
   } catch (error) {
@@ -85,5 +85,9 @@ const changeArticleVotes = async (obj, id) => {
   const article = await checkExists("articles", "article_id", id);
   return article.rows[0];
 };
+const commentDelete = async (id) => {
+  await checkExists("comments", "comment_id", id);
+  await deleteItem("comments", "comment_id", id);
+};
 
-module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes };
+module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes, commentDelete };

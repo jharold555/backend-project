@@ -41,4 +41,9 @@ const patchVotes = async (table, column, obj, id) => {
     throw error
   }
 };
-module.exports = {checkExists, patchVotes};
+const deleteItem = async (table, column, id) => {
+  const value = [id]
+  const queryStr = format("DELETE FROM %I WHERE %I = $1;", table, column)
+  await db.query(queryStr, value)
+}
+module.exports = {checkExists, patchVotes, deleteItem};
