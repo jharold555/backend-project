@@ -16,7 +16,7 @@ const checkExists = async (table, column, value) => {
     return dbOutput;
   } catch (error) {
     if (error.message.includes("invalid input syntax")) {
-      return Promise.reject({ status: 400, msg: "400 Invalid Route" });
+      return Promise.reject({ status: 400, msg: "400 Bad Request" });
     }
 
     throw error;

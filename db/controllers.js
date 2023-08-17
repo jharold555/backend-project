@@ -1,7 +1,10 @@
 const {
     getTopicsData,
     getApiData,
-    getArticleData
+    getArticleData,
+    getArticlesData,
+    getCommentsData,
+    insertComment
 }                    = require('./models')
 
 const getApis = (req, res, next) => {
@@ -21,5 +24,23 @@ const getArticle = (req, res, next) => {
   }).catch(next);
     
 }
-
-module.exports = {getTopics, getApis, getArticle}
+const getArticles = (req, res, next) => {
+    getArticlesData().then(articles => {
+        res.status(200).send({articles})
+    }).catch(next)
+}
+const getArticleComments = (req, res, next) => {
+    const id = req.params.article_id
+    getCommentsData(id).then(comments => {
+        res.status(200).send({comments})
+    }).catch(next)
+}
+const postComment = (req, res, next) => {
+    const id = req.params.article_id
+    const newComment = req.body
+    insertComment(newComment, id).then(() => {
+        const comment = newComment.body
+        res.status(201).send({comment})
+    }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment}
