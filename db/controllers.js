@@ -4,7 +4,8 @@ const {
     getArticleData,
     getArticlesData,
     getCommentsData,
-    insertComment
+    insertComment,
+    changeArticleVotes
 }                    = require('./models')
 
 const getApis = (req, res, next) => {
@@ -38,9 +39,15 @@ const getArticleComments = (req, res, next) => {
 const postComment = (req, res, next) => {
     const id = req.params.article_id
     const newComment = req.body
-    insertComment(newComment, id).then(() => {
-        const comment = newComment.body
-        res.status(201).send({comment})
+    insertComment(newComment, id).then((comment) => {
+        res.status(201).send(comment[0])
     }).catch(next)
 }
-module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment}
+const patchArticle = (req, res, next) => {
+    const id = req.params.article_id
+    const obj = req.body
+    changeArticleVotes(obj, id).then((article) => {
+        res.status(200).send({article})
+    }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle}

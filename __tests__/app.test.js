@@ -3,7 +3,7 @@ const app = require("../db/app.js");
 const seed = require("../db/seeds/seed.js");
 const testData = require("../db/data/test-data/index.js");
 const db = require("../db/connection.js");
-const checkExists = require('../db/utils.js')
+const { checkExists, patchVotes } = require("../db/utils.js");
 
 beforeEach(() => {
   return seed(testData);
@@ -120,7 +120,6 @@ describe("GET /api/articles", () => {
 });
 
 describe("GET /api/:article_id/comments", () => {
-
   test("returns a 400 error for incorrect id data type", async () => {
     const response = await request(app).get("/api/ba/comments").expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
@@ -178,24 +177,24 @@ describe("POST /api/articles/:article_id/comments", () => {
       username: "butter_bridge",
       body: "hello",
     };
-   const response = await request(app)
+    const response = await request(app)
       .post("/api/articles/nn/comments")
       .send(postData)
       .expect(400);
-  expect(response.body.msg).toBe("400 Bad Request");
+    expect(response.body.msg).toBe("400 Bad Request");
   });
   test("returns 404 error message for non-existent article id", async () => {
     const postData = {
       username: "butter_bridge",
       body: "hello",
     };
-   const response = await request(app)
+    const response = await request(app)
       .post("/api/articles/18/comments")
       .send(postData)
       .expect(404);
-  expect(response.body.msg).toBe("404 article_id of 18 Not Found");
+    expect(response.body.msg).toBe("404 article_id of 18 Not Found");
   });
-  test("returns 404 error for non-existent user", async () => {
+  test("returns 400 error for non-existent user (invalid req body)", async () => {
     const postData = {
       username: "bob",
       body: "hello",
@@ -203,8 +202,8 @@ describe("POST /api/articles/:article_id/comments", () => {
     const response = await request(app)
       .post("/api/articles/6/comments")
       .send(postData)
-      .expect(404);
-    expect(response.body.msg).toBe("404 username of bob Not Found");
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
   });
   test("returns 400 error for invalid request body", async () => {
     const postData = {};
@@ -223,7 +222,14 @@ describe("POST /api/articles/:article_id/comments", () => {
       .post("/api/articles/6/comments")
       .send(postData)
       .expect(201);
-    expect(response.body.comment).toBe("hello");
+    expect(response.body).toMatchObject({
+      article_id: 6,
+      author: "butter_bridge",
+      body: "hello",
+      comment_id: 19,
+      created_at: response.body.created_at,
+      votes: 0,
+    });
   });
   test("updates database", async () => {
     const original = await checkExists("comments", "article_id", 6);
@@ -238,5 +244,60 @@ describe("POST /api/articles/:article_id/comments", () => {
     const updated = await checkExists("comments", "article_id", 6);
     expect(updated.rows.length).toBe(original.rows.length + 1);
     expect(updated.rows.some((obj) => obj.body === "hello5")).toBe(true);
+  });
+});
+describe("PATCH /api/articles/:article_id", () => {
+  test("returns a 400 error for incorrect id type", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/articles/banan")
+      .send(post)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns a 404 error for id that does not exist", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/articles/85")
+      .send(post)
+      .expect(404);
+    expect(response.body.msg).toBe("404 article_id of 85 Not Found");
+  });
+  test("returns 400 error for invalid request body", async () => {
+    const post = {};
+    const response = await request(app)
+      .patch("/api/articles/5")
+      .send(post)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("updates votes for article in database", async () => {
+    const post = { inc_votes: 6 };
+    const originalVotes = await db.query(
+      "SELECT votes FROM articles WHERE article_id = 1"
+    );
+    await request(app).patch("/api/articles/1").send(post).expect(200);
+    const newVotes = await db.query(
+      "SELECT votes FROM articles WHERE article_id = 1"
+    );
+    expect(newVotes.rows[0].votes).toBe(originalVotes.rows[0].votes + 6);
+  });
+  test("returns article", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/articles/1")
+      .send(post)
+      .expect(200);
+    expect(response.body.article).toMatchObject({
+      article_id: 1,
+      title: "Living in the shadow of a great man",
+      topic: "mitch",
+      author: "butter_bridge",
+      body: "I find this existence challenging",
+      created_at: "2020-07-09T20:11:00.000Z",
+      votes: 106,
+      article_img_url:
+        "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
+    });
   });
 });
