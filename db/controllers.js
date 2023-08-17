@@ -6,7 +6,8 @@ const {
     getCommentsData,
     insertComment,
     changeArticleVotes,
-    commentDelete
+    commentDelete,
+    getUsersData
 }                    = require('./models')
 
 const getApis = (req, res, next) => {
@@ -54,7 +55,12 @@ const patchArticle = (req, res, next) => {
 const deleteComment = (req, res, next) => {
     const id = req.params.comment_id
     commentDelete(id).then(() => {
-        res.status(204).send({})
+        res.status(204).send()
     }).catch(next)
 }
-module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment}
+const getUsers = (req, res, next) => {
+    getUsersData().then(users => {
+        res.status(200).send({users})
+    }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers}

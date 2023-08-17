@@ -317,7 +317,6 @@ describe("DELETE /api/comments/:comment_id", () => {
   });
   test("returns 204 status with no content", async () => {
     const response = await request(app).delete("/api/comments/8").expect(204);
-    expect(response.body).toEqual({});
   });
   test("deletes comment from database", async () => {
     await request(app).delete("/api/comments/8").expect(204);
@@ -326,5 +325,25 @@ describe("DELETE /api/comments/:comment_id", () => {
     expect(
       response.body.comments.every((comment) => comment.comment_id !== 8)
     ).toBe(true);
+  });
+});
+describe("GET /api/users", () => {
+  test("returns 400 error for incorrect URL", async () => {
+    const response = await request(app).get("/api/use").expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 200 status code and an object with key users containing array", async () => {
+    const response = await request(app).get("/api/users").expect(200);
+    expect(Array.isArray(response.body.users)).toBe(true);
+  });
+  test("returns array of all user objects with correct properties", async () => {
+    const response = await request(app).get("/api/users").expect(200);
+    const users = response.body.users;
+    expect(users.length).toBe(4)
+    users.forEach((user) => {
+      expect(user).toHaveProperty("username");
+      expect(user).toHaveProperty("name");
+      expect(user).toHaveProperty("avatar_url");
+    });
   });
 });

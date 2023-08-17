@@ -89,5 +89,8 @@ const commentDelete = async (id) => {
   await checkExists("comments", "comment_id", id);
   await deleteItem("comments", "comment_id", id);
 };
-
-module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes, commentDelete };
+const getUsersData = async () => {
+  const users = await db.query("SELECT * FROM users");
+  return users.rows;
+};
+module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes, commentDelete, getUsersData };
