@@ -72,7 +72,7 @@ describe("GET /api/articles/:article_id", () => {
 
   test("returns a 404 error for id that does not exist", async () => {
     const response = await request(app).get("/api/articles/70").expect(404);
-    expect(response.body.msg).toBe("404 article_id of 70 Not Found");
+    expect(response.body.msg).toBe("404 Not Found");
   });
 
   test("returns a 400 error for incorrect id type", async () => {
@@ -127,14 +127,12 @@ describe("GET /api/:article_id/comments", () => {
 
   test("returns 404 error for article id that does not exist", async () => {
     const response = await request(app).get("/api/65/comments").expect(404);
-    expect(response.body.msg).toBe("404 article_id of 65 Not Found");
+    expect(response.body.msg).toBe("404 Not Found");
   });
 
   test("returns 404 error if no comments for article", async () => {
     const response = await request(app).get("/api/4/comments").expect(404);
-    expect(response.body.msg).toBe(
-      "404 comments for article_id of 4 Not Found"
-    );
+    expect(response.body.msg).toBe("404 comments Not Found");
   });
 
   test("returns 200 status code", async () => {
@@ -183,7 +181,7 @@ describe("POST /api/articles/:article_id/comments", () => {
       .expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
   });
-  test("returns 404 error message for non-existent article id", async () => {
+  test("returns 400 error message for non-existent article id", async () => {
     const postData = {
       username: "butter_bridge",
       body: "hello",
@@ -191,8 +189,8 @@ describe("POST /api/articles/:article_id/comments", () => {
     const response = await request(app)
       .post("/api/articles/18/comments")
       .send(postData)
-      .expect(404);
-    expect(response.body.msg).toBe("404 article_id of 18 Not Found");
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
   });
   test("returns 400 error for non-existent user (invalid req body)", async () => {
     const postData = {
@@ -261,7 +259,7 @@ describe("PATCH /api/articles/:article_id", () => {
       .patch("/api/articles/85")
       .send(post)
       .expect(404);
-    expect(response.body.msg).toBe("404 article_id of 85 Not Found");
+    expect(response.body.msg).toBe("404 Not Found");
   });
   test("returns 400 error for invalid request body", async () => {
     const post = {};
@@ -310,21 +308,18 @@ describe("DELETE /api/comments/:comment_id", () => {
   });
   test("returns a 404 error for non-existent id", async () => {
     const response = await request(app).delete("/api/comments/678").expect(404);
-    expect(response.body.msg).toBe("404 comment_id of 678 Not Found");
+    expect(response.body.msg).toBe("404 Not Found");
   });
   test("returns 204 status with no content", async () => {
     const response = await request(app).delete("/api/comments/8").expect(204);
     expect(response.body).toEqual({});
   });
   test("deletes comment from database", async () => {
-    const original = await db.query(
-      "SELECT * FROM comments WHERE comment_id = 8"
-    );
-    expect(original.rows.length).toBe(1)
     await request(app).delete("/api/comments/8").expect(204);
-    const deleted = await db.query(
-      "SELECT * FROM comments WHERE comment_id = 8"
-    );
-    expect(deleted.rows.length).toBe(0);
+
+    const response = await request(app).get("/api/1/comments").expect(200);
+    expect(
+      response.body.comments.every((comment) => comment.comment_id !== 8)
+    ).toBe(true);
   });
 });

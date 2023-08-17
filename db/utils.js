@@ -9,7 +9,7 @@ const checkExists = async (table, column, value) => {
     if (dbOutput.rows.length === 0) {
       return Promise.reject({
         status: 404,
-        msg: `404 ${column} of ${value} Not Found`,
+        msg: `404 Not Found`,
       });
     }
 

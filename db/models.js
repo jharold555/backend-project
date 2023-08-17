@@ -46,7 +46,7 @@ getCommentsData = async (id) => {
   if (commentsArray.length === 0) {
     return Promise.reject({
       status: 404,
-      msg: `404 comments for article_id of ${id} Not Found`,
+      msg: `404 comments Not Found`,
     });
   }
   return commentsArray
@@ -73,7 +73,7 @@ const insertComment = async (body, id) => {
   return commentQ.rows
 }
 catch(error){
-  if(error.msg.includes('username of')){
+  if(error.msg.includes('Not Found')){
     return Promise.reject({status: 400, msg: '400 Bad Request'})
   }
   throw error
