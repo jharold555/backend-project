@@ -1,5 +1,5 @@
 const db = require("./connection.js");
-const checkExists = require("./utils.js");
+const {checkExists, patchVotes}= require("./utils.js");
 const fsPromises = require("fs").promises;
 
 const getApiData = async () => {
@@ -52,20 +52,9 @@ getCommentsData = async (id) => {
   return commentsArray
 };
 const insertComment = async (body, id) => {
-  const keys = Object.keys(body);
-  if (
-    keys.length !== 2 ||
-    !keys.includes("body") ||
-    !keys.includes("username")
-  ) {
-    return Promise.reject({
-      status: 400,
-      msg: "400 Bad Request",
-    });
-  }
+  try{
   const user = body.username;
   await checkExists("articles", "article_id", id);
-
   await checkExists("users", "username", user);
   const comment = {
     article_id: id,
@@ -75,11 +64,26 @@ const insertComment = async (body, id) => {
     created_at: new Date(),
   };
   const vals = Object.values(comment);
-  await db.query(
+  const commentQ =  await db.query(
     `INSERT INTO comments (article_id, author, votes, body, created_at) 
   VALUES ($1, $2, $3, $4, $5)
   RETURNING *;`,
     vals
   );
+  return commentQ.rows
+}
+catch(error){
+  if(error.msg.includes('username of')){
+    return Promise.reject({status: 400, msg: '400 Bad Request'})
+  }
+  throw error
+}
 };
-module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment };
+const changeArticleVotes = async (obj, id) => {
+  await checkExists("articles", "article_id", id);
+  await patchVotes("articles", "article_id", obj, id);
+  const article = await checkExists("articles", "article_id", id);
+  return article.rows[0];
+};
+
+module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes };
