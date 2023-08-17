@@ -49,7 +49,7 @@ describe("GET apis", () => {
   });
 });
 
-describe("GET /api/articles/:article_id", () => {
+describe.only("GET /api/articles/:article_id", () => {
   test("returns 200 status code", async () => {
     await request(app).get("/api/articles/2").expect(200);
   });
@@ -79,7 +79,13 @@ describe("GET /api/articles/:article_id", () => {
     const response = await request(app).get("/api/articles/banana").expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
   });
+  test("returns correct comment count in object", async () => {
+    const response = await request(app).get("/api/articles/5").expect(200);
+    const article = response.body.article
+    expect(article).toHaveProperty('comment_count', '2');
+  });
 });
+
 
 describe("GET /api/articles", () => {
   test("returns 200 status code", async () => {
