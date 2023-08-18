@@ -6,7 +6,8 @@ const {
     getArticlesData,
     getCommentsData,
     insertComment,
-    getUsersData
+    getUsersData,
+    postArticleData
 }                    = require('./models')
 const { checkExists, patchVotes, deleteItem } = require('./utils')
 
@@ -86,4 +87,10 @@ const patchComment = (req, res, next) => {
         res.status(200).send({comment})
     }).catch(next)
 }
-module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername, patchComment}
+const postArticle = (req, res, next) => {
+    const obj = req.body
+    postArticleData(obj).then(article => {
+        res.status(201).send({article})
+    }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername, patchComment, postArticle}

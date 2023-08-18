@@ -455,64 +455,77 @@ describe("PATCH /api/comments/:comment_id", () => {
     });
   });
 });
-// describe("POST /api/articles", () => {
-//   test("returns 400 error for invaled req object", async () => {
-//     const data = {};
-//     const response = await request(app)
-//       .post("/api/articles")
-//       .send(data)
-//       .expect(400);
-//     expect(response.body.msg).toBe("400 Bad Request: Missing Part Or All Request Body");
-//   });
-//   test("returns 404 error for author/topic not in database", async () => {
-//     const data1 = {
-//       author: "bob",
-//       title: "jon",
-//       body: "hello",
-//       topic: "paper",
-//       article_img_url: "",
-//     };
-//     const data2 = {
-//       author: "icellusedkars",
-//       title: "jon",
-//       body: "hello",
-//       topic: "dogs",
-//       article_img_url: "",
-//     };
-//     const response1 = await request(app)
-//       .post("/api/articles")
-//       .send(data1)
-//       .expect(400);
-//     expect(response1.body.msg).toBe("400 Bad Request: Key (author)=(bob) is not present in table \"users\".");
-//     const response2 = await request(app)
-//       .post("/api/articles")
-//       .send(data2)
-//       .expect(400);
-//       expect(response2.body.msg).toBe("400 Bad Request: Key (topic)=(dogs) is not present in table \"topics\".")
-//   });
-//   test("returns article with correct properties with url default", async () => {
-//     const data = {
-//       author: "butter_bridge",
-//       title: "jon",
-//       body: "hello",
-//       topic: "paper",
-//       article_img_url: "",
-//     };
-//     const response = await request(app)
-//       .post("/api/articles")
-//       .send(data)
-//       .expect(201);
-//     expect(response.body.article).toMatchObject({
-//       article_id: 14,
-//       article_img_url:
-//         "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
-//       author: "butter_bridge",
-//       body: "hello",
-//       comment_count: "0",
-//       created_at: response.body.article.created_at,
-//       title: "jon",
-//       topic: "paper",
-//       votes: 0,
-//     });
-//   })
-// })
+describe("POST /api/articles", () => {
+  test("returns 400 error for invalid req object", async () => {
+    const data = {};
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 400 error for author/topic not in database", async () => {
+    const data1 = {
+      author: "bob",
+      title: "jon",
+      body: "hello",
+      topic: "paper",
+      article_img_url: "",
+    };
+    const data2 = {
+      author: "icellusedkars",
+      title: "jon",
+      body: "hello",
+      topic: "dogs",
+      article_img_url: "",
+    };
+    const response1 = await request(app)
+      .post("/api/articles")
+      .send(data1)
+      .expect(400);
+    expect(response1.body.msg).toBe("400 Bad Request");
+    const response2 = await request(app)
+      .post("/api/articles")
+      .send(data2)
+      .expect(400);
+      expect(response2.body.msg).toBe("400 Bad Request")
+  });
+  test('returns article with correct properties and values', async () => {
+    const data = {
+      author: "butter_bridge",
+      title: "jon",
+      body: "hello",
+      topic: "paper",
+      article_img_url: "img.url",
+    };
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(201);
+      const article = response.body.article
+      expect(article).toHaveProperty('article_id', 14)
+      expect(article).toHaveProperty('article_img_url', 'img.url')
+      expect(article).toHaveProperty('author', 'butter_bridge')
+      expect(article).toHaveProperty('body', 'hello')
+      expect(article).toHaveProperty('comment_count', '0')
+      expect(article).toHaveProperty('created_at')
+      expect(article).toHaveProperty('title', 'jon')
+      expect(article).toHaveProperty('topic', 'paper')
+      expect(article).toHaveProperty('votes', 0)
+  })
+  test("returns article with correct properties with url default", async () => {
+    const data = {
+      author: "butter_bridge",
+      title: "jon",
+      body: "hello",
+      topic: "paper",
+      article_img_url: "",
+    };
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(201);
+      const article = response.body.article 
+      expect(article).toHaveProperty('article_img_url', "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700")
+  })
+})
