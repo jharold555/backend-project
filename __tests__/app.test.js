@@ -49,7 +49,7 @@ describe("GET apis", () => {
   });
 });
 
-describe.only("GET /api/articles/:article_id", () => {
+describe("GET /api/articles/:article_id", () => {
   test("returns 200 status code", async () => {
     await request(app).get("/api/articles/2").expect(200);
   });
