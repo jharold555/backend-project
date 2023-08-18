@@ -275,16 +275,21 @@ describe("PATCH /api/articles/:article_id", () => {
       .expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
   });
+  test("returns 400 error for invalid inc_votes data type", async () => {
+    const post = { inc_votes: 'ds'};
+    const response = await request(app)
+      .patch("/api/articles/5")
+      .send(post)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
   test("updates votes for article in database", async () => {
     const post = { inc_votes: 6 };
-    const originalVotes = await db.query(
-      "SELECT votes FROM articles WHERE article_id = 1"
-    );
     await request(app).patch("/api/articles/1").send(post).expect(200);
     const newVotes = await db.query(
       "SELECT votes FROM articles WHERE article_id = 1"
     );
-    expect(newVotes.rows[0].votes).toBe(originalVotes.rows[0].votes + 6);
+    expect(newVotes.rows[0].votes).toBe(106);
   });
   test("returns article", async () => {
     const post = { inc_votes: 6 };
