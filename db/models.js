@@ -105,18 +105,9 @@ catch(error){
   throw error
 }
 };
-const changeArticleVotes = async (obj, id) => {
-  await checkExists("articles", "article_id", id);
-  await patchVotes("articles", "article_id", obj, id);
-  const article = await checkExists("articles", "article_id", id);
-  return article.rows[0];
-};
-const commentDelete = async (id) => {
-  await checkExists("comments", "comment_id", id);
-  await deleteItem("comments", "comment_id", id);
-};
+
 const getUsersData = async () => {
   const users = await db.query("SELECT * FROM users");
   return users.rows;
 };
-module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, changeArticleVotes, commentDelete, getUsersData };
+module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, getUsersData };

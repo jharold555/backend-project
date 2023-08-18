@@ -6,11 +6,9 @@ const {
     getArticlesData,
     getCommentsData,
     insertComment,
-    changeArticleVotes,
-    commentDelete,
     getUsersData
 }                    = require('./models')
-const { checkExists, patchVotes } = require('./utils')
+const { checkExists, patchVotes, deleteItem } = require('./utils')
 
 const getApis = (req, res, next) => {
     getApiData().then((apis) => {
@@ -53,13 +51,17 @@ const postComment = (req, res, next) => {
 const patchArticle = (req, res, next) => {
     const id = req.params.article_id
     const obj = req.body
-    changeArticleVotes(obj, id).then((article) => {
+    checkExists("articles", "article_id", id).then(() => {
+        return patchVotes("articles", "article_id", obj, id)
+    }).then((article) => {
         res.status(200).send({article})
     }).catch(next)
 }
 const deleteComment = (req, res, next) => {
     const id = req.params.comment_id
-    commentDelete(id).then(() => {
+    checkExists("comments", "comment_id", id).then(() => {
+    deleteItem("comments", "comment_id", id)
+    }).then(() => {
         res.status(204).send()
     }).catch(next)
 }
@@ -81,7 +83,6 @@ const patchComment = (req, res, next) => {
    .then(() => {
     return patchVotes('comments', 'comment_id', obj, id)
     }).then(comment => {
-        console.log(comment)
         res.status(200).send({comment})
     }).catch(next)
 }

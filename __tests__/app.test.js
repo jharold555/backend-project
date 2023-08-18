@@ -317,7 +317,7 @@ describe("DELETE /api/comments/:comment_id", () => {
     expect(response.body.msg).toBe("404 Not Found");
   });
   test("returns 204 status with no content", async () => {
-    const response = await request(app).delete("/api/comments/8").expect(204);
+      await request(app).delete("/api/comments/8").expect(204);
   });
   test("deletes comment from database", async () => {
     await request(app).delete("/api/comments/8").expect(204);
@@ -405,7 +405,7 @@ describe("GET /api/users/:username", () => {
     expect(user.username).toBe("icellusedkars");
   });
 });
-describe.only("PATCH /api/comments/:comment_id", () => {
+describe("PATCH /api/comments/:comment_id", () => {
   test("returns a 400 error for incorrect id type", async () => {
     const post = { inc_votes: 6 };
     const response = await request(app)
@@ -432,14 +432,11 @@ describe.only("PATCH /api/comments/:comment_id", () => {
   });
   test("updates votes for comment in database", async () => {
     const post = { inc_votes: 6 };
-    const originalVotes = await db.query(
-      "SELECT votes FROM comments WHERE comment_id = 2"
-    );
     await request(app).patch("/api/comments/2").send(post).expect(200);
     const newVotes = await db.query(
       "SELECT votes FROM comments WHERE comment_id = 2"
     );
-    expect(newVotes.rows[0].votes).toBe(originalVotes.rows[0].votes + 6);
+    expect(newVotes.rows[0].votes).toBe(20);
   });
   test("returns single comment", async () => {
     const post = { inc_votes: 6 };
@@ -458,3 +455,64 @@ describe.only("PATCH /api/comments/:comment_id", () => {
     });
   });
 });
+// describe("POST /api/articles", () => {
+//   test("returns 400 error for invaled req object", async () => {
+//     const data = {};
+//     const response = await request(app)
+//       .post("/api/articles")
+//       .send(data)
+//       .expect(400);
+//     expect(response.body.msg).toBe("400 Bad Request: Missing Part Or All Request Body");
+//   });
+//   test("returns 404 error for author/topic not in database", async () => {
+//     const data1 = {
+//       author: "bob",
+//       title: "jon",
+//       body: "hello",
+//       topic: "paper",
+//       article_img_url: "",
+//     };
+//     const data2 = {
+//       author: "icellusedkars",
+//       title: "jon",
+//       body: "hello",
+//       topic: "dogs",
+//       article_img_url: "",
+//     };
+//     const response1 = await request(app)
+//       .post("/api/articles")
+//       .send(data1)
+//       .expect(400);
+//     expect(response1.body.msg).toBe("400 Bad Request: Key (author)=(bob) is not present in table \"users\".");
+//     const response2 = await request(app)
+//       .post("/api/articles")
+//       .send(data2)
+//       .expect(400);
+//       expect(response2.body.msg).toBe("400 Bad Request: Key (topic)=(dogs) is not present in table \"topics\".")
+//   });
+//   test("returns article with correct properties with url default", async () => {
+//     const data = {
+//       author: "butter_bridge",
+//       title: "jon",
+//       body: "hello",
+//       topic: "paper",
+//       article_img_url: "",
+//     };
+//     const response = await request(app)
+//       .post("/api/articles")
+//       .send(data)
+//       .expect(201);
+//     expect(response.body.article).toMatchObject({
+//       article_id: 14,
+//       article_img_url:
+//         "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
+//       author: "butter_bridge",
+//       body: "hello",
+//       comment_count: "0",
+//       created_at: response.body.article.created_at,
+//       title: "jon",
+//       topic: "paper",
+//       votes: 0,
+//     });
+//   })
+// })
