@@ -18,7 +18,14 @@ const getTopicsData = async () => {
 };
 
 const getArticleData = async (id) => {
-  const article = await checkExists("articles", "article_id", id);
+  await checkExists("articles", "article_id", id);
+  let queryStr = format(`SELECT articles.*, 
+   COUNT(comment_id) 
+   AS comment_count FROM articles 
+   LEFT JOIN comments ON comments.article_id = articles.article_id 
+   WHERE articles.article_id = $1
+   GROUP BY articles.article_id`);
+  const article = await db.query(queryStr, [id]);
   return article.rows[0];
 };
 const getArticlesData = async (
