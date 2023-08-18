@@ -30,11 +30,13 @@ const patchVotes = async (table, column, obj, id) => {
   const votes = currentVote.rows[0].votes + obj.inc_votes;
   const values = [votes, id];
   const queryStr2 = format(
-    "UPDATE %I SET votes = $1 WHERE %I = $2;",
+    "UPDATE %I SET votes = $1 WHERE %I = $2 RETURNING *;",
     table,
     column
   );
- await db.query(queryStr2, values);
+  const item = await db.query(queryStr2, values);
+ 
+  return item.rows[0]
   }catch(error){
     if(error.message.includes('invalid input syntax')){
       return Promise.reject({status: 400, msg: '400 Bad Request'})

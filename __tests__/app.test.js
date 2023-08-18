@@ -405,3 +405,56 @@ describe("GET /api/users/:username", () => {
     expect(user.username).toBe("icellusedkars");
   });
 });
+describe.only("PATCH /api/comments/:comment_id", () => {
+  test("returns a 400 error for incorrect id type", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/comments/bann")
+      .send(post)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns a 404 error for id that does not exist", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/comments/85")
+      .send(post)
+      .expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+  test("returns 400 error for invalid request body", async () => {
+    const post = {};
+    const response = await request(app)
+      .patch("/api/comments/5")
+      .send(post)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("updates votes for comment in database", async () => {
+    const post = { inc_votes: 6 };
+    const originalVotes = await db.query(
+      "SELECT votes FROM comments WHERE comment_id = 2"
+    );
+    await request(app).patch("/api/comments/2").send(post).expect(200);
+    const newVotes = await db.query(
+      "SELECT votes FROM comments WHERE comment_id = 2"
+    );
+    expect(newVotes.rows[0].votes).toBe(originalVotes.rows[0].votes + 6);
+  });
+  test("returns single comment", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/comments/1")
+      .send(post)
+      .expect(200);
+      const comment = response.body.comment
+    expect(comment).toMatchObject({
+      article_id: 9,
+      author: "butter_bridge",
+      body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!",
+      comment_id: 1,
+      created_at: "2020-04-06T12:17:00.000Z",
+      votes: 22,
+    });
+  });
+});

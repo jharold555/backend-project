@@ -10,7 +10,7 @@ const {
     commentDelete,
     getUsersData
 }                    = require('./models')
-const { checkExists } = require('./utils')
+const { checkExists, patchVotes } = require('./utils')
 
 const getApis = (req, res, next) => {
     getApiData().then((apis) => {
@@ -74,4 +74,15 @@ const getUsername = (req, res, next) => {
         res.status(200).send(user.rows[0])
     }).catch(next)
 }
-module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername}
+const patchComment = (req, res, next) => {
+    const id = req.params.comment_id
+    const obj = req.body
+    checkExists('comments', 'comment_id', id)
+   .then(() => {
+    return patchVotes('comments', 'comment_id', obj, id)
+    }).then(comment => {
+        console.log(comment)
+        res.status(200).send({comment})
+    }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername, patchComment}
