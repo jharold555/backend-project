@@ -1,3 +1,4 @@
+
 const {
     getTopicsData,
     getApiData,
@@ -9,6 +10,7 @@ const {
     commentDelete,
     getUsersData
 }                    = require('./models')
+const { checkExists } = require('./utils')
 
 const getApis = (req, res, next) => {
     getApiData().then((apis) => {
@@ -66,4 +68,10 @@ const getUsers = (req, res, next) => {
         res.status(200).send({users})
     }).catch(next)
 }
-module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers}
+const getUsername = (req, res, next) => {
+    const id = req.params.username
+    checkExists('users', 'username', id).then(user => {
+        res.status(200).send(user.rows[0])
+    }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername}

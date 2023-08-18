@@ -383,3 +383,25 @@ describe("FEATURE GET /api/articles", () => {
     expect(response.body.articles).toBeSortedBy("title");
   });
 });
+describe("GET /api/users/:username", () => {
+  test("returns a 404 error for username that does not exist", async () => {
+    const response = await request(app).get("/api/users/jim").expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+  test("returns user object with correct properties", async () => {
+    const response = await request(app)
+      .get("/api/users/icellusedkars")
+      .expect(200);
+      const user = response.body 
+    expect(user).toHaveProperty('username')
+    expect(user).toHaveProperty('name')
+    expect(user).toHaveProperty('avatar_url')
+  });
+  test("returns user object with correct username", async () => {
+    const response = await request(app)
+      .get("/api/users/icellusedkars")
+      .expect(200);
+      const user = response.body 
+    expect(user.username).toBe("icellusedkars");
+  });
+});

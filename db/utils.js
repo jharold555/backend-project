@@ -11,6 +11,7 @@ const checkExists = async (table, column, value) => {
         status: 404,
         msg: `404 Not Found`,
       });
+      
     }
 
     return dbOutput;
