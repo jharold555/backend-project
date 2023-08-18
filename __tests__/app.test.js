@@ -322,7 +322,7 @@ describe("DELETE /api/comments/:comment_id", () => {
     expect(response.body.msg).toBe("404 Not Found");
   });
   test("returns 204 status with no content", async () => {
-    const response = await request(app).delete("/api/comments/8").expect(204);
+      await request(app).delete("/api/comments/8").expect(204);
   });
   test("deletes comment from database", async () => {
     await request(app).delete("/api/comments/8").expect(204);
@@ -388,3 +388,149 @@ describe("FEATURE GET /api/articles", () => {
     expect(response.body.articles).toBeSortedBy("title");
   });
 });
+describe("GET /api/users/:username", () => {
+  test("returns a 404 error for username that does not exist", async () => {
+    const response = await request(app).get("/api/users/jim").expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+  test("returns user object with correct properties", async () => {
+    const response = await request(app)
+      .get("/api/users/icellusedkars")
+      .expect(200);
+      const user = response.body 
+    expect(user).toHaveProperty('username')
+    expect(user).toHaveProperty('name')
+    expect(user).toHaveProperty('avatar_url')
+  });
+  test("returns user object with correct username", async () => {
+    const response = await request(app)
+      .get("/api/users/icellusedkars")
+      .expect(200);
+      const user = response.body 
+    expect(user.username).toBe("icellusedkars");
+  });
+});
+describe("PATCH /api/comments/:comment_id", () => {
+  test("returns a 400 error for incorrect id type", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/comments/bann")
+      .send(post)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns a 404 error for id that does not exist", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/comments/85")
+      .send(post)
+      .expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+  test("returns 400 error for invalid request body", async () => {
+    const post = {};
+    const response = await request(app)
+      .patch("/api/comments/5")
+      .send(post)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("updates votes for comment in database", async () => {
+    const post = { inc_votes: 6 };
+    await request(app).patch("/api/comments/2").send(post).expect(200);
+    const newVotes = await db.query(
+      "SELECT votes FROM comments WHERE comment_id = 2"
+    );
+    expect(newVotes.rows[0].votes).toBe(20);
+  });
+  test("returns single comment", async () => {
+    const post = { inc_votes: 6 };
+    const response = await request(app)
+      .patch("/api/comments/1")
+      .send(post)
+      .expect(200);
+      const comment = response.body.comment
+    expect(comment).toMatchObject({
+      article_id: 9,
+      author: "butter_bridge",
+      body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!",
+      comment_id: 1,
+      created_at: "2020-04-06T12:17:00.000Z",
+      votes: 22,
+    });
+  });
+});
+describe("POST /api/articles", () => {
+  test("returns 400 error for invalid req object", async () => {
+    const data = {};
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 400 error for author/topic not in database", async () => {
+    const data1 = {
+      author: "bob",
+      title: "jon",
+      body: "hello",
+      topic: "paper",
+      article_img_url: "",
+    };
+    const data2 = {
+      author: "icellusedkars",
+      title: "jon",
+      body: "hello",
+      topic: "dogs",
+      article_img_url: "",
+    };
+    const response1 = await request(app)
+      .post("/api/articles")
+      .send(data1)
+      .expect(400);
+    expect(response1.body.msg).toBe("400 Bad Request");
+    const response2 = await request(app)
+      .post("/api/articles")
+      .send(data2)
+      .expect(400);
+      expect(response2.body.msg).toBe("400 Bad Request")
+  });
+  test('returns article with correct properties and values', async () => {
+    const data = {
+      author: "butter_bridge",
+      title: "jon",
+      body: "hello",
+      topic: "paper",
+      article_img_url: "img.url",
+    };
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(201);
+      const article = response.body.article
+      expect(article).toHaveProperty('article_id', 14)
+      expect(article).toHaveProperty('article_img_url', 'img.url')
+      expect(article).toHaveProperty('author', 'butter_bridge')
+      expect(article).toHaveProperty('body', 'hello')
+      expect(article).toHaveProperty('comment_count', '0')
+      expect(article).toHaveProperty('created_at')
+      expect(article).toHaveProperty('title', 'jon')
+      expect(article).toHaveProperty('topic', 'paper')
+      expect(article).toHaveProperty('votes', 0)
+  })
+  test("returns article with correct properties with url default", async () => {
+    const data = {
+      author: "butter_bridge",
+      title: "jon",
+      body: "hello",
+      topic: "paper",
+      article_img_url: "",
+    };
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(201);
+      const article = response.body.article 
+      expect(article).toHaveProperty('article_img_url', "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700")
+  })
+})

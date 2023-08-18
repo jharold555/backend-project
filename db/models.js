@@ -114,20 +114,44 @@ const insertComment = async (body, id) => {
     throw error;
   }
 };
-const changeArticleVotes = async (obj, id) => {
-  await checkExists("articles", "article_id", id);
-  await patchVotes("articles", "article_id", obj, id);
-  const article = await checkExists("articles", "article_id", id);
-  return article.rows[0];
-};
-const commentDelete = async (id) => {
-  await checkExists("comments", "comment_id", id);
-  await deleteItem("comments", "comment_id", id);
-};
+
 const getUsersData = async () => {
   const users = await db.query("SELECT * FROM users");
   return users.rows;
 };
+const postArticleData = async (obj) => {
+  try {
+    if (obj.article_img_url === "") {
+      obj.article_img_url =
+        "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700";
+    }
+    const values = [
+      obj.author,
+      obj.title,
+      obj.body,
+      obj.topic,
+      obj.article_img_url,
+      0,
+      new Date()
+    ];
+    const articleid = await db.query(
+      `INSERT INTO articles (author, title, body, topic, article_img_url, votes, created_at)
+  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  RETURNING article_id;`,
+      values
+    );
+    const id = articleid.rows[0].article_id;
+    return await getArticleData(id);
+  } catch (error) {
+    if(error.code === '23503' || '23502'){
+      return Promise.reject({ status: 400, msg: "400 Bad Request"});
+    }
+    
+    throw error;
+  }
+}
+module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, getUsersData, postArticleData };
+=======
 module.exports = {
   getTopicsData,
   getApiData,
@@ -139,3 +163,4 @@ module.exports = {
   commentDelete,
   getUsersData,
 };
+
