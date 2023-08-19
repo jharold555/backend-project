@@ -81,11 +81,10 @@ describe("GET /api/articles/:article_id", () => {
   });
   test("returns correct comment count in object", async () => {
     const response = await request(app).get("/api/articles/5").expect(200);
-    const article = response.body.article
-    expect(article).toHaveProperty('comment_count', '2');
+    const article = response.body.article;
+    expect(article).toHaveProperty("comment_count", "2");
   });
 });
-
 
 describe("GET /api/articles", () => {
   test("returns 200 status code", async () => {
@@ -95,7 +94,7 @@ describe("GET /api/articles", () => {
   test("responds with array of article objects", async () => {
     const response = await request(app).get("/api/articles").expect(200);
     const { articles } = response.body;
-    expect(articles).toHaveLength(13);
+    expect(articles).toHaveLength(10);
     articles.forEach((article) => {
       expect(article).toHaveProperty("author");
       expect(article).toHaveProperty("title");
@@ -276,7 +275,7 @@ describe("PATCH /api/articles/:article_id", () => {
     expect(response.body.msg).toBe("400 Bad Request");
   });
   test("returns 400 error for invalid inc_votes data type", async () => {
-    const post = { inc_votes: 'ds'};
+    const post = { inc_votes: "ds" };
     const response = await request(app)
       .patch("/api/articles/5")
       .send(post)
@@ -322,7 +321,7 @@ describe("DELETE /api/comments/:comment_id", () => {
     expect(response.body.msg).toBe("404 Not Found");
   });
   test("returns 204 status with no content", async () => {
-      await request(app).delete("/api/comments/8").expect(204);
+    await request(app).delete("/api/comments/8").expect(204);
   });
   test("deletes comment from database", async () => {
     await request(app).delete("/api/comments/8").expect(204);
@@ -337,7 +336,7 @@ describe("GET /api/users", () => {
   test("returns array of all user objects with correct properties", async () => {
     const response = await request(app).get("/api/users").expect(200);
     const users = response.body.users;
-    expect(users.length).toBe(4)
+    expect(users.length).toBe(4);
     users.forEach((user) => {
       expect(user).toHaveProperty("username");
       expect(user).toHaveProperty("name");
@@ -397,16 +396,16 @@ describe("GET /api/users/:username", () => {
     const response = await request(app)
       .get("/api/users/icellusedkars")
       .expect(200);
-      const user = response.body 
-    expect(user).toHaveProperty('username')
-    expect(user).toHaveProperty('name')
-    expect(user).toHaveProperty('avatar_url')
+    const user = response.body;
+    expect(user).toHaveProperty("username");
+    expect(user).toHaveProperty("name");
+    expect(user).toHaveProperty("avatar_url");
   });
   test("returns user object with correct username", async () => {
     const response = await request(app)
       .get("/api/users/icellusedkars")
       .expect(200);
-      const user = response.body 
+    const user = response.body;
     expect(user.username).toBe("icellusedkars");
   });
 });
@@ -449,7 +448,7 @@ describe("PATCH /api/comments/:comment_id", () => {
       .patch("/api/comments/1")
       .send(post)
       .expect(200);
-      const comment = response.body.comment
+    const comment = response.body.comment;
     expect(comment).toMatchObject({
       article_id: 9,
       author: "butter_bridge",
@@ -493,9 +492,9 @@ describe("POST /api/articles", () => {
       .post("/api/articles")
       .send(data2)
       .expect(400);
-      expect(response2.body.msg).toBe("400 Bad Request")
+    expect(response2.body.msg).toBe("400 Bad Request");
   });
-  test('returns article with correct properties and values', async () => {
+  test("returns article with correct properties and values", async () => {
     const data = {
       author: "butter_bridge",
       title: "jon",
@@ -507,17 +506,17 @@ describe("POST /api/articles", () => {
       .post("/api/articles")
       .send(data)
       .expect(201);
-      const article = response.body.article
-      expect(article).toHaveProperty('article_id', 14)
-      expect(article).toHaveProperty('article_img_url', 'img.url')
-      expect(article).toHaveProperty('author', 'butter_bridge')
-      expect(article).toHaveProperty('body', 'hello')
-      expect(article).toHaveProperty('comment_count', '0')
-      expect(article).toHaveProperty('created_at')
-      expect(article).toHaveProperty('title', 'jon')
-      expect(article).toHaveProperty('topic', 'paper')
-      expect(article).toHaveProperty('votes', 0)
-  })
+    const article = response.body.article;
+    expect(article).toHaveProperty("article_id", 14);
+    expect(article).toHaveProperty("article_img_url", "img.url");
+    expect(article).toHaveProperty("author", "butter_bridge");
+    expect(article).toHaveProperty("body", "hello");
+    expect(article).toHaveProperty("comment_count", "0");
+    expect(article).toHaveProperty("created_at");
+    expect(article).toHaveProperty("title", "jon");
+    expect(article).toHaveProperty("topic", "paper");
+    expect(article).toHaveProperty("votes", 0);
+  });
   test("returns article with correct properties with url default", async () => {
     const data = {
       author: "butter_bridge",
@@ -530,7 +529,62 @@ describe("POST /api/articles", () => {
       .post("/api/articles")
       .send(data)
       .expect(201);
-      const article = response.body.article 
-      expect(article).toHaveProperty('article_img_url', "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700")
+    const article = response.body.article;
+    expect(article).toHaveProperty(
+      "article_img_url",
+      "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
+    );
+  });
+});
+describe("PAGINATION GET /api/articles", () => {
+  test("returns only 10 article objects as default", async () => {
+    const response = await request(app).get("/api/articles?p=1");
+    const articles = response.body.articles;
+    expect(articles.length).toBe(10);
+  });
+  test("returns number of articles for limit specified", async () => {
+    const response = await request(app).get("/api/articles?limit=4&p=1");
+    const articles = response.body.articles;
+    expect(articles.length).toBe(4);
+  });
+  test("returns next set of articles offset by limit", async () => {
+    const response1 = await request(app).get("/api/articles?limit=5&p=1");
+    const articles1 = response1.body.articles;
+    const response2 = await request(app).get("/api/articles?limit=5&p=2");
+    const articles2 = response2.body.articles;
+    expect(articles2.length).toBe(5);
+    articles2.forEach((article) => {
+      expect(articles1).not.toContain(article);
+    });
+  });
+  test("returns total count as property on response body", async () => {
+    const response = await request(app).get("/api/articles?limit=4&p=1");
+    const total = response.body.total_count;
+    expect(total).toBe("13");
+  });
+  test("total count displays total with any filters applied", async () => {
+    const response = await request(app).get(
+      "/api/articles?topic=cats&limit=4&p=1"
+    );
+    const total = response.body.total_count;
+    expect(total).toBe("1");
+  });
+  test('returns 400 error if limit not a number', async () => {
+  const response = await request(app).get(
+    "/api/articles?topic=cats&limit=h&p=1"
+  );
+  expect(response.body.msg).toBe('400 Bad Request')
   })
-})
+  test('returns 400 error if page not a number', async () => {
+    const response = await request(app).get(
+      "/api/articles?topic=cats&limit=8&p=h"
+    );
+    expect(response.body.msg).toBe('400 Bad Request')
+    })
+    test('returns 404 error if page number exceeds number of articles to return', async () => {
+      const response = await request(app).get(
+        "/api/articles?topic=cats&limit=8&p=8"
+      );
+      expect(response.body.msg).toBe('404 articles Not Found')
+      })
+});

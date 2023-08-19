@@ -16,10 +16,6 @@ const checkExists = async (table, column, value) => {
 
     return dbOutput;
   } catch (error) {
-    if (error.message.includes("invalid input syntax")) {
-      return Promise.reject({ status: 400, msg: "400 Bad Request" });
-    }
-
     throw error;
   }
 };
@@ -38,9 +34,6 @@ const patchVotes = async (table, column, obj, id) => {
  
   return item.rows[0]
   }catch(error){
-    if(error.message.includes('invalid input syntax')){
-      return Promise.reject({status: 400, msg: '400 Bad Request'})
-    }
     throw error
   }
 };

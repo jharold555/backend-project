@@ -5,24 +5,11 @@ const {
     getApiData,
     getArticleData,
     getArticlesData,
-    getCommentsData,
     insertComment,
     getUsersData,
     postArticleData
 }                    = require('./models')
 const { checkExists, patchVotes, deleteItem } = require('./utils')
-=======
-  getTopicsData,
-  getApiData,
-  getArticleData,
-  getArticlesData,
-  getCommentsData,
-  insertComment,
-  changeArticleVotes,
-  commentDelete,
-  getUsersData,
-} = require("./models");
-const { checkExists, patchVotes, deleteItem } = require("./utils.js");
 
 
 const getApis = (req, res, next) => {
@@ -51,22 +38,16 @@ const getArticles = (req, res, next) => {
   const topic = req.query.topic;
   const sort_by = req.query.sort_by;
   const order = req.query.order;
-  if (topic) {
-    checkExists("articles", "topic", topic)
-      .then(() => {
-        return getArticlesData(sort_by, order, topic);
-      })
-      .then((articles) => {
-        res.status(200).send({ articles });
-      })
+  const limit = req.query.limit
+  const p = req.query.p
+  getArticlesData(sort_by, order, limit, p, topic)
+      .then((responseObj) => {
+        if(responseObj.articles.length === 0){
+          res.status(404).send({msg: '404 articles Not Found'})
+        }
+        res.status(200).send(responseObj);
+})
       .catch(next);
-  } else {
-    getArticlesData(sort_by, order)
-      .then((articles) => {
-        res.status(200).send({ articles });
-      })
-      .catch(next);
-  }
 };
 const getArticleComments = (req, res, next) => {
   const id = req.params.article_id;
@@ -86,7 +67,6 @@ const postComment = (req, res, next) => {
     .catch(next);
 };
 const patchArticle = (req, res, next) => {
-  
     const id = req.params.article_id
     const obj = req.body
     checkExists("articles", "article_id", id).then(() => {
@@ -131,39 +111,5 @@ const postArticle = (req, res, next) => {
     }).catch(next)
 }
 module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername, patchComment, postArticle}
-=======
-  const id = req.params.article_id;
-  const obj = req.body;
-  changeArticleVotes(obj, id)
-    .then((article) => {
-      res.status(200).send({ article });
-    })
-    .catch(next);
-};
-const deleteComment = (req, res, next) => {
-  const id = req.params.comment_id;
-  commentDelete(id)
-    .then(() => {
-      res.status(204).send();
-    })
-    .catch(next);
-};
-const getUsers = (req, res, next) => {
-  getUsersData()
-    .then((users) => {
-      res.status(200).send({ users });
-    })
-    .catch(next);
-};
-module.exports = {
-  getTopics,
-  getApis,
-  getArticle,
-  getArticles,
-  getArticleComments,
-  postComment,
-  patchArticle,
-  deleteComment,
-  getUsers,
-};
+;
 

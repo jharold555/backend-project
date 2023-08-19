@@ -31,8 +31,12 @@ const getArticleData = async (id) => {
 const getArticlesData = async (
   sort_by = "created_at",
   order = "desc",
+  limit = 10,
+  p = 1,
   topic
 ) => {
+  const offset = (p - 1) * limit;
+  let values = [limit, offset];
   const validOrder = ["asc", "desc"];
 
   if (!validOrder.includes(order)) {
@@ -60,14 +64,40 @@ const getArticlesData = async (
       column
     );
     order === "asc" ? (queryStr2 += ` ASC`) : (queryStr2 += ` DESC`);
-    
+    let queryStr3 = format(` LIMIT $1 
+    OFFSET $2`);
+
     if (topic) {
+      await checkExists("articles", "topic", topic);
       const topicStr = format(` WHERE topic = $1 `);
-      const articles = await db.query(queryStr1 + topicStr + queryStr2, [topic]);
-      return articles.rows;
+      let queryStr3 = format(` LIMIT $2 
+    OFFSET $3`);
+      values.unshift(topic);
+      const articlesQuery = await db.query(
+        queryStr1 + topicStr + queryStr2 + queryStr3,
+        values
+      );
+      const total = await db.query(
+        "SELECT COUNT(*) AS total_count FROM articles WHERE topic = $1",
+        [topic]
+      );
+      const articles = articlesQuery.rows;
+      const { total_count } = total.rows[0];
+      const responseObj = { articles, total_count };
+      return responseObj;
     }
-    const articles = await db.query(queryStr1 + queryStr2);
-    return articles.rows;
+
+    const articlesQuery = await db.query(
+      queryStr1 + queryStr2 + queryStr3,
+      values
+    );
+    const total = await db.query(
+      "SELECT COUNT(*) AS total_count FROM articles"
+    );
+    const articles = articlesQuery.rows;
+    const { total_count } = total.rows[0];
+    const responseObj = { articles, total_count };
+    return responseObj;
   } catch (error) {
     throw error;
   }
@@ -132,7 +162,7 @@ const postArticleData = async (obj) => {
       obj.topic,
       obj.article_img_url,
       0,
-      new Date()
+      new Date(),
     ];
     const articleid = await db.query(
       `INSERT INTO articles (author, title, body, topic, article_img_url, votes, created_at)
@@ -143,24 +173,16 @@ const postArticleData = async (obj) => {
     const id = articleid.rows[0].article_id;
     return await getArticleData(id);
   } catch (error) {
-    if(error.code === '23503' || '23502'){
-      return Promise.reject({ status: 400, msg: "400 Bad Request"});
-    }
-    
     throw error;
   }
-}
-module.exports = { getTopicsData, getApiData, getArticleData, getArticlesData, getCommentsData, insertComment, getUsersData, postArticleData };
-=======
+};
+
 module.exports = {
   getTopicsData,
   getApiData,
   getArticleData,
   getArticlesData,
-  getCommentsData,
   insertComment,
-  changeArticleVotes,
-  commentDelete,
   getUsersData,
+  postArticleData,
 };
-
