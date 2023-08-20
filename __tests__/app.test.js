@@ -535,6 +535,27 @@ describe("POST /api/articles", () => {
       "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
     );
   });
+  test("updates database with article", async () => {
+    const data = {
+      author: "butter_bridge",
+      title: "jon",
+      body: "hello",
+      topic: "paper",
+      article_img_url: "img.url",
+    };
+    await request(app).post("/api/articles").send(data).expect(201);
+    const response = await request(app)
+      .get("/api/articles?limit=20")
+      .expect(200);
+    const articles = response.body.articles;
+    expect(articles.length).toBe(14)
+    expect(articles[0]).toMatchObject({
+      author: "butter_bridge",
+      title: "jon",
+      topic: "paper",
+      article_img_url: "img.url",
+    });
+  });
 });
 describe("PAGINATION GET /api/articles", () => {
   test("returns only 10 article objects as default", async () => {
@@ -569,22 +590,107 @@ describe("PAGINATION GET /api/articles", () => {
     const total = response.body.total_count;
     expect(total).toBe("1");
   });
-  test('returns 400 error if limit not a number', async () => {
-  const response = await request(app).get(
-    "/api/articles?topic=cats&limit=h&p=1"
-  );
-  expect(response.body.msg).toBe('400 Bad Request')
-  })
-  test('returns 400 error if page not a number', async () => {
+  test("returns 400 error if limit not a number", async () => {
+    const response = await request(app).get(
+      "/api/articles?topic=cats&limit=h&p=1"
+    );
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 400 error if page not a number", async () => {
     const response = await request(app).get(
       "/api/articles?topic=cats&limit=8&p=h"
     );
-    expect(response.body.msg).toBe('400 Bad Request')
-    })
-    test('returns 404 error if page number exceeds number of articles to return', async () => {
-      const response = await request(app).get(
-        "/api/articles?topic=cats&limit=8&p=8"
-      );
-      expect(response.body.msg).toBe('404 articles Not Found')
-      })
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 404 error if page number exceeds number of articles to return", async () => {
+    const response = await request(app).get(
+      "/api/articles?topic=cats&limit=8&p=8"
+    );
+    expect(response.body.msg).toBe("404 articles Not Found");
+  });
 });
+describe("PAGINATION GET /api/:article_id/comments", () => {
+  test("returns number of comments for limit specified", async () => {
+    const response = await request(app).get("/api/3/comments?limit=1&p=1");
+    const comments = response.body.comments;
+    expect(comments.length).toBe(1);
+  });
+  test("returns next set of comments offset by limit", async () => {
+    const response1 = await request(app).get("/api/5/comments?limit=1&p=1");
+    const comments1 = response1.body.comments;
+    const response2 = await request(app).get("/api/5/comments?limit=1&p=2");
+    const comments2 = response2.body.comments;
+    expect(comments2.length).toBe(1);
+    comments2.forEach((comment) => {
+      expect(comments1).not.toContain(comment);
+    });
+  });
+  test("returns 400 error if limit not a number", async () => {
+    const response = await request(app).get("/api/2/comments?limit=h&p=1");
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 400 error if page not a number", async () => {
+    const response = await request(app).get("/api/2/comments?limit=8&p=h");
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 404 error if page number exceeds number of articles to return", async () => {
+    const response = await request(app).get("/api/5/comments?limit=1&p=8");
+    expect(response.body.msg).toBe("404 comments Not Found");
+  });
+});
+describe("POST /api/topics", () => {
+  test("returns 400 error for invalid req body", async () => {
+    const data = {};
+    const response = await request(app)
+      .post("/api/topics")
+      .send(data)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test('returns 400 error for empty slug/description', async () => {
+    const data = {
+      slug: "bob",
+      description: ''
+    };
+    const response = await request(app)
+      .post("/api/topics")
+      .send(data)
+      .expect(400);
+    expect(response.body.msg).toBe('400 Bad Request')
+  })
+  test('returns topic object', async () => {
+    const data = {
+      slug: "bob",
+      description: 'dogs'
+    };
+    const response = await request(app)
+      .post("/api/topics")
+      .send(data)
+      .expect(201);
+    expect(response.body.topic).toEqual({slug: "bob",
+    description: 'dogs'})
+  })
+  test('updates database with topic', async () => {
+    const data = {
+      slug: "bob",
+      description: 'dogs'
+    };
+    await request(app).post("/api/topics").send(data).expect(201)
+   const response = await request(app).get('/api/topics').expect(200)
+   const topics = response.body.topics
+   expect(topics.length).toBe(4)
+  })
+});
+describe.only('DELETE /api/articles/:article_id', () => {
+  test('returns 400 error for invalid id data type', async () => {
+    const response = await request(app).delete('/api/articles/ban').expect(400)
+    expect(response.body.msg).toBe('400 Bad Request')
+  })
+  test('returns 404 error for non-existent article id', async () => {
+    const response = await request(app).delete('/api/articles/17').expect(404)
+    expect(response.body.msg).toBe('404 Not Found')
+  })
+  test('deletes article from database', () => {
+    
+  })
+})

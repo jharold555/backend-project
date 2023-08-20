@@ -102,21 +102,18 @@ const getArticlesData = async (
     throw error;
   }
 };
-getCommentsData = async (id) => {
+getCommentsData = async (limit = 10, p = 1, id) => {
+  const offset = (p - 1) * limit;
   await checkExists("articles", "article_id", id);
   const comments = await db.query(
-    "SELECT * FROM comments WHERE article_id = $1 ORDER BY created_at DESC;",
-    [id]
+    `SELECT * FROM comments WHERE article_id = $1 ORDER BY created_at DESC LIMIT $2 
+    OFFSET $3;`,
+    [id, limit, offset]
   );
   const commentsArray = comments.rows;
-  if (commentsArray.length === 0) {
-    return Promise.reject({
-      status: 404,
-      msg: `404 comments Not Found`,
-    });
-  }
   return commentsArray;
 };
+
 const insertComment = async (body, id) => {
   try {
     const user = body.username;
@@ -176,7 +173,19 @@ const postArticleData = async (obj) => {
     throw error;
   }
 };
-
+const postTopicData = async (obj) => {
+  const values = [obj.slug, obj.description];
+  if (values.includes(undefined) || values.includes('')) {
+    return Promise.reject({ status: 400, msg: "400 Bad Request" });
+  }
+  const topic = await db.query(
+    `INSERT INTO topics (slug, description)
+  VALUES ($1, $2)
+  RETURNING *;`,
+    values
+  );
+  return topic.rows[0];
+};
 module.exports = {
   getTopicsData,
   getApiData,
@@ -185,4 +194,5 @@ module.exports = {
   insertComment,
   getUsersData,
   postArticleData,
+  postTopicData,
 };

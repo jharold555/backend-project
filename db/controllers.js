@@ -7,7 +7,8 @@ const {
     getArticlesData,
     insertComment,
     getUsersData,
-    postArticleData
+    postArticleData,
+    postTopicData
 }                    = require('./models')
 const { checkExists, patchVotes, deleteItem } = require('./utils')
 
@@ -51,8 +52,13 @@ const getArticles = (req, res, next) => {
 };
 const getArticleComments = (req, res, next) => {
   const id = req.params.article_id;
-  getCommentsData(id)
+  const limit = req.query.limit
+  const p = req.query.p
+  getCommentsData(limit, p, id)
     .then((comments) => {
+      if(comments.length === 0){
+        res.status(404).send({msg: '404 comments Not Found'})
+      }
       res.status(200).send({ comments });
     })
     .catch(next);
@@ -110,6 +116,22 @@ const postArticle = (req, res, next) => {
         res.status(201).send({article})
     }).catch(next)
 }
-module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername, patchComment, postArticle}
+const postTopic = (req, res, next) => {
+  const obj = req.body
+  postTopicData(obj).then(topic => {
+    res.status(201).send({topic})
+  }).catch(next)
+}
+const deleteArticle = (req, res, next) => {
+  const id = req.params.article_id
+  checkExists('articles', 'article_id', id).then(() => {
+    deleteItem('comments', 'article_id', id)
+  }).then(() => {
+    deleteItem('articles', 'article_id', id)
+  }).then(() => {
+   res.status(204).send()
+  }).catch(next)
+}
+module.exports = {getTopics, getApis, getArticle, getArticles, getArticleComments, postComment, patchArticle, deleteComment, getUsers, getUsername, patchComment, postArticle, postTopic, deleteArticle}
 ;
 
