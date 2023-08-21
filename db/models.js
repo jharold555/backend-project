@@ -1,5 +1,5 @@
 const db = require("./connection.js");
-const { checkExists, patchVotes, deleteItem } = require("./utils.js");
+const { checkExists } = require("./utils.js");
 const fsPromises = require("fs").promises;
 const format = require("pg-format");
 
@@ -18,7 +18,6 @@ const getTopicsData = async () => {
 };
 
 const getArticleData = async (id) => {
-  await checkExists("articles", "article_id", id);
   let queryStr = format(`SELECT articles.*, 
    COUNT(comment_id) 
    AS comment_count FROM articles 
@@ -104,7 +103,6 @@ const getArticlesData = async (
 };
 getCommentsData = async (limit = 10, p = 1, id) => {
   const offset = (p - 1) * limit;
-  await checkExists("articles", "article_id", id);
   const comments = await db.query(
     `SELECT * FROM comments WHERE article_id = $1 ORDER BY created_at DESC LIMIT $2 
     OFFSET $3;`,
@@ -114,19 +112,21 @@ getCommentsData = async (limit = 10, p = 1, id) => {
   return commentsArray;
 };
 
-const insertComment = async (body, id) => {
+const insertComment = async (newComment, id) => {
   try {
-    const user = body.username;
-    await checkExists("articles", "article_id", id);
-    await checkExists("users", "username", user);
+    const user = newComment.username;
     const comment = {
       article_id: id,
       author: user,
       votes: 0,
-      body: body.body,
+      body: newComment.body,
       created_at: new Date(),
     };
     const vals = Object.values(comment);
+    
+    if(vals.includes(undefined) || vals.includes('')){
+    return Promise.reject({status: 400, msg: '400 Bad Request'})
+    }
     const commentQ = await db.query(
       `INSERT INTO comments (article_id, author, votes, body, created_at) 
   VALUES ($1, $2, $3, $4, $5)
@@ -135,9 +135,6 @@ const insertComment = async (body, id) => {
     );
     return commentQ.rows;
   } catch (error) {
-    if (error.msg.includes("Not Found")) {
-      return Promise.reject({ status: 400, msg: "400 Bad Request" });
-    }
     throw error;
   }
 };
@@ -161,6 +158,10 @@ const postArticleData = async (obj) => {
       0,
       new Date(),
     ];
+    if(values.includes(undefined) || values.includes('')){
+      return Promise.reject({status: 400, msg: '400 Bad Request'})
+      }
+
     const articleid = await db.query(
       `INSERT INTO articles (author, title, body, topic, article_img_url, votes, created_at)
   VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -168,7 +169,7 @@ const postArticleData = async (obj) => {
       values
     );
     const id = articleid.rows[0].article_id;
-    return await getArticleData(id);
+    return id;
   } catch (error) {
     throw error;
   }

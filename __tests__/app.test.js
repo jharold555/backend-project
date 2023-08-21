@@ -50,10 +50,15 @@ describe("GET apis", () => {
 });
 
 describe("GET /api/articles/:article_id", () => {
-  test("returns 200 status code", async () => {
-    await request(app).get("/api/articles/2").expect(200);
+  test("returns a 404 error for id that does not exist", async () => {
+    const response = await request(app).get("/api/articles/70").expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
   });
 
+  test("returns a 400 error for incorrect id type", async () => {
+    const response = await request(app).get("/api/articles/banana").expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
   test("responds with correct article object with article_id property", async () => {
     const response = await request(app).get("/api/articles/2").expect(200);
     const { article } = response.body;
@@ -68,16 +73,6 @@ describe("GET /api/articles/:article_id", () => {
       article_img_url:
         "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
     });
-  });
-
-  test("returns a 404 error for id that does not exist", async () => {
-    const response = await request(app).get("/api/articles/70").expect(404);
-    expect(response.body.msg).toBe("404 Not Found");
-  });
-
-  test("returns a 400 error for incorrect id type", async () => {
-    const response = await request(app).get("/api/articles/banana").expect(400);
-    expect(response.body.msg).toBe("400 Bad Request");
   });
   test("returns correct comment count in object", async () => {
     const response = await request(app).get("/api/articles/5").expect(200);
@@ -186,13 +181,33 @@ describe("POST /api/articles/:article_id/comments", () => {
       .expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
   });
-  test("returns 400 error message for non-existent article id", async () => {
+  test("returns 404 error message for non-existent article id", async () => {
     const postData = {
       username: "butter_bridge",
       body: "hello",
     };
     const response = await request(app)
       .post("/api/articles/18/comments")
+      .send(postData)
+      .expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+
+  test("returns 400 error for invalid request body", async () => {
+    const postData = {};
+    const response = await request(app)
+      .post("/api/articles/6/comments")
+      .send(postData)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 400 error for empty request body properties", async () => {
+    const postData = {
+      user: "butter_bridge",
+      body: "",
+    };
+    const response = await request(app)
+      .post("/api/articles/6/comments")
       .send(postData)
       .expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
@@ -202,14 +217,6 @@ describe("POST /api/articles/:article_id/comments", () => {
       username: "bob",
       body: "hello",
     };
-    const response = await request(app)
-      .post("/api/articles/6/comments")
-      .send(postData)
-      .expect(400);
-    expect(response.body.msg).toBe("400 Bad Request");
-  });
-  test("returns 400 error for invalid request body", async () => {
-    const postData = {};
     const response = await request(app)
       .post("/api/articles/6/comments")
       .send(postData)
@@ -460,7 +467,7 @@ describe("PATCH /api/comments/:comment_id", () => {
   });
 });
 describe("POST /api/articles", () => {
-  test("returns 400 error for invalid req object", async () => {
+  test("returns 400 error for empty req object", async () => {
     const data = {};
     const response = await request(app)
       .post("/api/articles")
@@ -468,31 +475,47 @@ describe("POST /api/articles", () => {
       .expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
   });
-  test("returns 400 error for author/topic not in database", async () => {
-    const data1 = {
+  test("returns 400 error for empty req object properties", async () => {
+    const data = {
+      author: "butter_bridge",
+      title: "jon",
+      body: "",
+      topic: "paper",
+      article_img_url: "img.url",
+    };
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 400 error for author not in database", async () => {
+    const data = {
       author: "bob",
       title: "jon",
       body: "hello",
       topic: "paper",
       article_img_url: "",
     };
-    const data2 = {
+    const response = await request(app)
+      .post("/api/articles")
+      .send(data)
+      .expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 400 error for topic not in database", async () => {
+    const data = {
       author: "icellusedkars",
       title: "jon",
       body: "hello",
       topic: "dogs",
       article_img_url: "",
     };
-    const response1 = await request(app)
+    const response = await request(app)
       .post("/api/articles")
-      .send(data1)
+      .send(data)
       .expect(400);
-    expect(response1.body.msg).toBe("400 Bad Request");
-    const response2 = await request(app)
-      .post("/api/articles")
-      .send(data2)
-      .expect(400);
-    expect(response2.body.msg).toBe("400 Bad Request");
+    expect(response.body.msg).toBe("400 Bad Request");
   });
   test("returns article with correct properties and values", async () => {
     const data = {
@@ -548,7 +571,7 @@ describe("POST /api/articles", () => {
       .get("/api/articles?limit=20")
       .expect(200);
     const articles = response.body.articles;
-    expect(articles.length).toBe(14)
+    expect(articles.length).toBe(14);
     expect(articles[0]).toMatchObject({
       author: "butter_bridge",
       title: "jon",
@@ -647,50 +670,56 @@ describe("POST /api/topics", () => {
       .expect(400);
     expect(response.body.msg).toBe("400 Bad Request");
   });
-  test('returns 400 error for empty slug/description', async () => {
+  test("returns 400 error for empty slug/description", async () => {
     const data = {
       slug: "bob",
-      description: ''
+      description: "",
     };
     const response = await request(app)
       .post("/api/topics")
       .send(data)
       .expect(400);
-    expect(response.body.msg).toBe('400 Bad Request')
-  })
-  test('returns topic object', async () => {
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns topic object", async () => {
     const data = {
       slug: "bob",
-      description: 'dogs'
+      description: "dogs",
     };
     const response = await request(app)
       .post("/api/topics")
       .send(data)
       .expect(201);
-    expect(response.body.topic).toEqual({slug: "bob",
-    description: 'dogs'})
-  })
-  test('updates database with topic', async () => {
+    expect(response.body.topic).toEqual({ slug: "bob", description: "dogs" });
+  });
+  test("updates database with topic", async () => {
     const data = {
       slug: "bob",
-      description: 'dogs'
+      description: "dogs",
     };
-    await request(app).post("/api/topics").send(data).expect(201)
-   const response = await request(app).get('/api/topics').expect(200)
-   const topics = response.body.topics
-   expect(topics.length).toBe(4)
-  })
+    await request(app).post("/api/topics").send(data).expect(201);
+    const response = await request(app).get("/api/topics").expect(200);
+    const topics = response.body.topics;
+    expect(topics.length).toBe(4);
+  });
 });
-describe.only('DELETE /api/articles/:article_id', () => {
-  test('returns 400 error for invalid id data type', async () => {
-    const response = await request(app).delete('/api/articles/ban').expect(400)
-    expect(response.body.msg).toBe('400 Bad Request')
-  })
-  test('returns 404 error for non-existent article id', async () => {
-    const response = await request(app).delete('/api/articles/17').expect(404)
-    expect(response.body.msg).toBe('404 Not Found')
-  })
-  test('deletes article from database', () => {
-    
-  })
-})
+describe("DELETE /api/articles/:article_id", () => {
+  test("returns 400 error for invalid id data type", async () => {
+    const response = await request(app).delete("/api/articles/ban").expect(400);
+    expect(response.body.msg).toBe("400 Bad Request");
+  });
+  test("returns 404 error for non-existent article id", async () => {
+    const response = await request(app).delete("/api/articles/17").expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+  test("deletes article from database", async () => {
+    await request(app).delete("/api/articles/2").expect(204);
+    const response = await request(app).get("/api/articles/2").expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+  test("deletes comments for article from database", async () => {
+    await request(app).delete("/api/articles/5").expect(204);
+    const response = await request(app).get("/api/5/comments").expect(404);
+    expect(response.body.msg).toBe("404 Not Found");
+  });
+});

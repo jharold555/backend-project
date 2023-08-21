@@ -11,7 +11,6 @@ const checkExists = async (table, column, value) => {
         status: 404,
         msg: `404 Not Found`,
       });
-      
     }
 
     return dbOutput;
@@ -20,26 +19,30 @@ const checkExists = async (table, column, value) => {
   }
 };
 const patchVotes = async (table, column, obj, id) => {
-  try{
-  const queryStr1 = format("SELECT votes FROM %I WHERE %I = $1", table, column);
-  const currentVote = await db.query(queryStr1, [id]);
-  const votes = currentVote.rows[0].votes + obj.inc_votes;
-  const values = [votes, id];
-  const queryStr2 = format(
-    "UPDATE %I SET votes = $1 WHERE %I = $2 RETURNING *;",
-    table,
-    column
-  );
-  const item = await db.query(queryStr2, values);
- 
-  return item.rows[0]
-  }catch(error){
-    throw error
+  try {
+    const queryStr1 = format(
+      "SELECT votes FROM %I WHERE %I = $1",
+      table,
+      column
+    );
+    const currentVote = await db.query(queryStr1, [id]);
+    const votes = currentVote.rows[0].votes + obj.inc_votes;
+    const values = [votes, id];
+    const queryStr2 = format(
+      "UPDATE %I SET votes = $1 WHERE %I = $2 RETURNING *;",
+      table,
+      column
+    );
+    const item = await db.query(queryStr2, values);
+
+    return item.rows[0];
+  } catch (error) {
+    throw error;
   }
 };
 const deleteItem = async (table, column, id) => {
-  const value = [id]
-  const queryStr = format("DELETE FROM %I WHERE %I = $1;", table, column)
-  await db.query(queryStr, value)
-}
-module.exports = {checkExists, patchVotes, deleteItem};
+  const value = [id];
+  const queryStr = format("DELETE FROM %I WHERE %I = $1;", table, column);
+  await db.query(queryStr, value);
+};
+module.exports = { checkExists, patchVotes, deleteItem };
